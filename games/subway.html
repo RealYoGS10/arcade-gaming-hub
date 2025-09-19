@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Subway Runner — Arcade Hub</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    body{display:flex;flex-direction:column;min-height:100vh}
+    .game-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:20px}
+    canvas{background:linear-gradient(#6dd3f5,#1b6ea7);border-radius:12px;max-width:100%}
+    .controls{padding:12px;text-align:center}
+    .btn.alt{background:#fff;color:#061018}
+  </style>
+</head>
+<body>
+  <header class="hero" style="padding:18px">
+    <h1>Subway Runner</h1>
+    <p class="muted">Press SPACE to jump. Survive as long as you can.</p>
+    <a class="btn small" href="../index.html">← Back</a>
+  </header>
+
+  <div class="game-wrap">
+    <canvas id="canvas" width="800" height="360"></canvas>
+  </div>
+
+  <div class="controls">
+    <button id="restart" class="btn alt">Restart</button>
+    <span class="muted" id="score">Score: 0</span>
+  </div>
+
+  <script>
+    // Simple endless runner - jump over obstacles
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width, height = canvas.height;
+    let player = {x:120,y:height-60,w:40,h:40,vy:0,jumping:false};
+    let gravity = 0.9;
+    let obstacles = [];
+    let frames = 0, speed = 4, score = 0, running = true;
+
+    function spawn() {
+      const h = 30 + Math.random()*40;
+      obstacles.push({x:width + 20, y:height-40-h, w:30 + Math.random()*30, h: h});
+    }
+    function reset(){obstacles=[];frames=0;score=0;player.y=height-60;player.vy=0;running=true}
+    function update(){
+      frames++;
+      if(frames % 90 === 0) spawn();
+      // player physics
+      player.vy += gravity;
+      player.y += player.vy;
+      if(player.y > height - 60){player.y = height-60; player.vy=0; player.jumping=false;}
+
+      // obstacles
+      for(let i=obstacles.length-1;i>=0;i--){
+        let o=obstacles[i];
+        o.x -= speed;
+        if(o.x + o.w < 0) { obstacles.splice(i,1); score+=10; }
+        // collision
+        if(player.x < o.x+o.w && player.x+player.w > o.x && player.y < o.y+o.h && player.y+player.h > o.y){
+          running=false;
+        }
+      }
+
+      // speed up gradually
+      if(frames % 600 === 0) speed += 0.5;
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,width,height);
+      // ground
+      ctx.fillStyle = '#133b4d';
+      ctx.fillRect(0,height-40,width,40);
+      // player
+      ctx.fillStyle = '#ffd166';
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+      // obstacles
+      ctx.fillStyle = '#ef476f';
+      obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
+      // score
+      document.getElementById('score').textContent = 'Score: ' + Math.floor(score/10 + frames/60);
+      if(!running){
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0,0,width,height);
+        ctx.fillStyle = '#fff';
+        ctx.font = '28px sans-serif';
+        ctx.fillText('Game Over — press Restart', width/2-160, height/2);
+      }
+    }
+
+    function loop(){
+      if(running) update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    document.addEventListener('keydown', e=>{
+      if(e.code === 'Space' || e.key === ' ') {
+        if(!running) return;
+        if(!player.jumping){
+          player.vy = -14;
+          player.jumping = true;
+        }
+        e.preventDefault();
+      }
+    });
+    document.getElementById('restart').addEventListener('click', ()=> { reset(); });
+    reset();
+    loop();
+  </script>
+</body>
+</html>

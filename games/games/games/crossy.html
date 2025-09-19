@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Crossy Road — Arcade Hub</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    body{display:flex;flex-direction:column;min-height:100vh}
+    .game-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:20px}
+    canvas{background:linear-gradient(#cde7ff,#71b7ff);border-radius:12px;max-width:100%}
+    .controls{padding:12px;text-align:center}
+  </style>
+</head>
+<body>
+  <header class="hero" style="padding:18px">
+    <h1>Crossy Road</h1>
+    <p class="muted">Use arrow keys to move. Reach the top.</p>
+    <a class="btn small" href="../index.html">← Back</a>
+  </header>
+
+  <div class="game-wrap">
+    <canvas id="c" width="520" height="520"></canvas>
+  </div>
+
+  <div class="controls">
+    <button id="restart" class="btn">Restart</button>
+    <span class="muted" id="stat">Score: 0</span>
+  </div>
+
+  <script>
+    const c = document.getElementById('c'), ctx = c.getContext('2d');
+    const grid = 8;
+    const cell = c.width / grid;
+    let player = {x: Math.floor(grid/2), y: grid-1};
+    let cars = [];
+    let lanes = [];
+    let frames = 0;
+    let score = 0;
+    function reset(){
+      player = {x: Math.floor(grid/2), y: grid-1};
+      cars = [];
+      lanes = [];
+      for(let i=0;i<6;i++){
+        lanes.push({speed: 1 + Math.random()*1.6, cars: []});
+      }
+      frames = 0; score=0;
+    }
+    function update(){
+      frames++;
+      // spawn cars in lanes
+      lanes.forEach((ln, idx) => {
+        if(frames % Math.floor(60 + Math.random()*80) === 0){
+          ln.cars.push({x: (Math.random()*2>1? -1: grid), w: 1 + Math.floor(Math.random()*2), dir: (Math.random()*2>1?1:-1)});
+        }
+        ln.cars.forEach(car => {
+          car.x += car.dir * ln.speed * 0.08 * (1 + idx*0.05);
+        });
+        // remove off-screen
+        ln.cars = ln.cars.filter(car => car.x > -2 && car.x < grid+2);
+      });
+
+      // collision: map player to lanes
+      lanes.forEach((ln, i) => {
+        let laneIndex = grid-2 - i; // lanes occupy rows
+        ln.cars.forEach(car => {
+          if(player.y === laneIndex){
+            if(player.x + 0.1 < car.x + car.w && player.x + 0.9 > car.x){
+              // hit -> reset to start
+              player.x = Math.floor(grid/2); player.y = grid-1;
+              score = Math.max(0, score-5);
+            }
+          }
+        });
+      });
+      // reaching top
+      if(player.y === 0){
+        score += 10; player.x = Math.floor(grid/2); player.y = grid-1;
+      }
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,c.width,c.height);
+      // draw rows
+      for(let r=0;r<grid;r++){
+        if(r===0) ctx.fillStyle = '#8fd8a0'; // goal
+        else if(r>0 && r<grid-1 && r >= grid-1-6) ctx.fillStyle = '#f2f2f2'; // lanes
+        else ctx.fillStyle = '#bde0ff';
+        ctx.fillRect(0, r*cell, c.width, cell);
+      }
+      // draw cars
+      lanes.forEach((ln, i) => {
+        let laneIndex = grid-2 - i;
+        ln.cars.forEach(car => {
+          ctx.fillStyle = '#ff6b6b';
+          ctx.fillRect(car.x * cell, laneIndex * cell + 6, car.w * cell, cell - 12);
+        });
+      });
+      // draw player
+      ctx.fillStyle = '#ffd166';
+      ctx.fillRect(player.x*cell + 8, player.y*cell + 8, cell-16, cell-16);
+
+      document.getElementById('stat').textContent = 'Score: ' + score;
+    }
+
+    document.addEventListener('keydown', e=>{
+      if(e.key === 'ArrowUp' && player.y > 0) player.y--;
+      if(e.key === 'ArrowDown' && player.y < grid-1) player.y++;
+      if(e.key === 'ArrowLeft' && player.x > 0) player.x--;
+      if(e.key === 'ArrowRight' && player.x < grid-1) player.x++;
+    });
+
+    document.getElementById('restart').addEventListener('click', reset);
+    function loop(){ update(); draw(); requestAnimationFrame(loop); }
+    reset(); loop();
+  </script>
+</body>
+</html>

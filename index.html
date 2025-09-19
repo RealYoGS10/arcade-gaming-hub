@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Arcade Gaming Hub — Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <h1>Arcade Gaming Hub</h1>
+      <p class="tag">Subway runner • Crossy roads • Slope — all in one place</p>
+    </header>
+
+    <section class="card login-card" id="login-section">
+      <h2>Sign In (10 demo accounts)</h2>
+      <form id="login-form" autocomplete="off">
+        <label>
+          Username
+          <input id="username" name="username" required autocomplete="off">
+        </label>
+        <label>
+          Password
+          <input id="password" name="password" type="password" required autocomplete="off">
+        </label>
+        <button type="submit" class="btn">Sign in</button>
+      </form>
+      <p id="login-msg" class="muted"></p>
+    </section>
+
+    <section class="card hidden" id="dashboard">
+      <div class="dash-header">
+        <div>
+          <h2 id="welcome"></h2>
+          <p class="muted">Choose a game to play</p>
+        </div>
+        <button id="logout" class="btn small">Log out</button>
+      </div>
+
+      <div class="games-grid">
+        <a class="game-card" href="games/subway.html">
+          <div class="game-preview subway-preview"></div>
+          <h3>Subway Runner</h3>
+        </a>
+
+        <a class="game-card" href="games/crossy.html">
+          <div class="game-preview crossy-preview"></div>
+          <h3>Crossy Road</h3>
+        </a>
+
+        <a class="game-card" href="games/slope.html">
+          <div class="game-preview slope-preview"></div>
+          <h3>Slope</h3>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script src="scripts.js"></script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Slope — Arcade Hub</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    body{display:flex;flex-direction:column;min-height:100vh}
+    .game-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:20px}
+    canvas{background:linear-gradient(#111,#0a1a1f);border-radius:12px;max-width:100%}
+    .controls{padding:12px;text-align:center}
+  </style>
+</head>
+<body>
+  <header class="hero" style="padding:18px">
+    <h1>Slope</h1>
+    <p class="muted">Use left/right to steer the ball. Survive.</p>
+    <a class="btn small" href="../index.html">← Back</a>
+  </header>
+
+  <div class="game-wrap">
+    <canvas id="s" width="600" height="480"></canvas>
+  </div>
+
+  <div class="controls">
+    <button id="restart" class="btn">Restart</button>
+    <span class="muted" id="sc">Score: 0</span>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('s');
+    const ctx = canvas.getContext('2d');
+    let w = canvas.width, h = canvas.height;
+    let ball = {x:w/2, y:h*0.6, r:10, vx:0, vy:0};
+    let tiles = [];
+    let speed = 2, frames=0, score=0, alive=true;
+    function makeTiles(){
+      tiles=[];
+      for(let i=0;i<40;i++){
+        const x = Math.random()*(w-80)+40;
+        const y = h - i*60;
+        tiles.push({x,y, w: 120});
+      }
+    }
+    function reset(){
+      ball = {x:w/2, y:h*0.6, r:10, vx:0, vy:0};
+      speed = 2; frames=0; score=0; alive=true;
+      makeTiles();
+    }
+    document.addEventListener('keydown', e=>{
+      if(e.key === 'ArrowLeft') ball.vx = -3;
+      if(e.key === 'ArrowRight') ball.vx = 3;
+    });
+    document.addEventListener('keyup', e=>{
+      if(e.key === 'ArrowLeft' || e.key === 'ArrowRight') ball.vx = 0;
+    });
+
+    function update(){
+      frames++;
+      ball.x += ball.vx;
+      // gravity forward
+      ball.y -= speed;
+      // wrap
+      if(ball.x < 0) ball.x = 0;
+      if(ball.x > w) ball.x = w;
+      // move tiles upward
+      tiles.forEach(t => t.y -= speed);
+      // remove tiles off top and add new
+      if(tiles.length && tiles[0].y < -60){
+        tiles.shift();
+        const lastY = tiles[tiles.length-1].y;
+        tiles.push({x: Math.random()*(w-120)+60, y: lastY + 60, w: 120});
+      }
+      // collision: if the ball misses a tile (falls between) -> die
+      let stood = false;
+      for(let t of tiles){
+        if(ball.y + ball.r >= t.y - 6 && ball.y + ball.r <= t.y + 20){
+          if(ball.x > t.x - 10 && ball.x < t.x + t.w + 10){
+            // standing on tile: push the ball up to prevent going through
+            ball.y = t.y - ball.r - 6;
+            stood = true;
+          }
+        }
+      }
+      if(!stood){
+        // ball falls off
+        alive = false;
+      }
+      // increase speed gradually
+      if(frames % 600 === 0) speed += 0.5;
+      score = Math.floor(frames/6);
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      // draw tiles
+      for(let t of tiles){
+        ctx.fillStyle = '#283c63';
+        ctx.fillRect(t.x, t.y, t.w, 20);
+      }
+      // ball
+      ctx.beginPath();
+      ctx.fillStyle = '#ffd166';
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+      ctx.fill();
+
+      document.getElementById('sc').textContent = 'Score: ' + score;
+      if(!alive){
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0,0,w,h);
+        ctx.fillStyle = '#fff';
+        ctx.font = '28px sans-serif';
+        ctx.fillText('You fell! Press Restart', w/2 - 130, h/2);
+      }
+    }
+
+    document.getElementById('restart').addEventListener('click', reset);
+    function loop(){
+      if(alive) update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+    reset();
+    loop();
+  </script>
+</body>
+</html>
